@@ -4,8 +4,19 @@ namespace EntityFrameworkCode
 {
     public class DataContext : DbContext
     {
-        public DbSet<>
+        private const string sqlConnectionString = @"Data Source=(localdb)\MSSQLLocalDB;server=localhost;database=EntityFrameworkCodeConventions";
+        public DbSet<Department> Departments { get; set; }
+        public DbSet<Employee> Employees { get; set; }
 
+        public DbSet<Person> Persons { get; set; }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (optionsBuilder.IsConfigured)
+            {
+                optionsBuilder.UseSqlServer(sqlConnectionString, builder => builder.EnableRetryOnFailure());
+            }
+        }
     }
     public class Department
     {

@@ -12,7 +12,7 @@ namespace EntityFrameworkCode
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            if (optionsBuilder.IsConfigured)
+            if (!optionsBuilder.IsConfigured)
             {
                 optionsBuilder.UseSqlServer(sqlConnectionString, builder => builder.EnableRetryOnFailure());
             }

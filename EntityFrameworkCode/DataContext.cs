@@ -9,6 +9,7 @@ namespace EntityFrameworkCode
         public DbSet<Employee> Employees { get; set; }
 
         public DbSet<Person> Persons { get; set; }
+        public DbSet<Product> Products { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -36,14 +37,27 @@ namespace EntityFrameworkCode
         public int DepartmentId { get; set; }
 
         // Foreign key??? - No
-        public int PersonId { get; set; }
+        public string? PersonId { get; set; }
+        public string? ProductId { get; set; }
+
+        public virtual Department Department { get; set; }
+
+        public virtual Person Person { get; set; }
+        public virtual Product Product { get; set; }
 
     }
 
     public class Person
     {
-        public int Id { get; set; }
+        public string Id { get; set; }
 
         public string? FullName { get; set; }
+    }
+
+    public class Product
+    {
+        public string Id { get; set; }
+
+        public string? Name { get; set; }
     }
 }

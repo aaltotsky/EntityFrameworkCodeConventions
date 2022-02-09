@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 
 namespace EntityFrameworkCode
 {
@@ -17,6 +18,52 @@ namespace EntityFrameworkCode
             {
                 optionsBuilder.UseSqlServer(sqlConnectionString, builder => builder.EnableRetryOnFailure());
             }
+        }
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+
+            string currentDate = "GETDATE()";
+
+            var applicationEntityTypes = typeof(BaseEntity).GetTypeInfo().Assembly.GetTypes().Where(
+                t => t.GetTypeInfo().IsClass
+                && typeof(BaseEntity).IsAssignableFrom(t)
+                && !t.GetTypeInfo().IsAbstract
+                && t.GetTypeInfo().IsSubclassOf(typeof(BaseEntity)));
+
+            foreach (Type type in applicationEntityTypes)
+            {
+                var dbSetType = this.GetType()
+                    .GetRuntimeProperties()
+                    .Where(o => o.PropertyType.GetTypeInfo().IsGenericType
+                    && o.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>)
+                    && o.PropertyType.GenericTypeArguments.Contains(type))
+                    .FirstOrDefault();
+
+                if (dbSetType != null)
+                {
+                    MethodInfo method = typeof(DataContext).GetMethod("BaseEntityDefaultValueSql", BindingFlags.Instance | BindingFlags.NonPublic);
+                    if (method == null)
+                    {
+                        throw new NotImplementedException("The 'BaseEntityDefaultValueSql' method is not implemented");
+                    }
+
+                    MethodInfo generic = method.MakeGenericMethod(type);
+                    generic?.Invoke(this, new object[] { builder });
+                }
+            }
+        }
+
+        private ModelBuilder BaseEntityDefaultValueSql<TEntity>(ModelBuilder builder)
+            where TEntity : BaseEntity
+        {
+            string currentDate = "GETDATE()";
+
+            return builder.Entity<TEntity>(entity =>
+            {
+                entity.Property(e => e.CreatedDate).HasDefaultValueSql(currentDate);
+            });
         }
     }
     public class Department
@@ -47,17 +94,13 @@ namespace EntityFrameworkCode
 
     }
 
-    public class Person
+    public class Person : BaseEntity
     {
-        public string Id { get; set; }
-
         public string? FullName { get; set; }
     }
 
-    public class Product
+    public class Product : BaseEntity
     {
-        public string Id { get; set; }
-
         public string? Name { get; set; }
     }
 }
